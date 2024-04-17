@@ -1,0 +1,286 @@
+const char MAIN_page[] PROGMEM = R"=====(
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi & MQTT Configuration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            /* Added padding for the whole page */
+        }
+
+        .container {
+            width: 80%;
+            /* Set width to 80% of the viewport */
+            margin: 0 auto;
+            /* Center the container horizontally */
+            max-width: 400px;
+            /* Limit maximum width on larger screens */
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+				
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        h2 {
+            margin-top: 0;
+            /* Remove default margin on the top */
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            background-color: #e1f5fe;
+            /* Light blue background for all sections */
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #b3e5fc;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            /* Adjusted margin-bottom for the label */
+            color: #555;
+        }
+				
+				.form-group {
+            display: block;
+            margin-bottom: 15px;
+            /* Adjusted margin-bottom for the label */
+            color: #555;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group input[type="button"],
+        .form-group input[type="submit"],
+        .form-group select {
+            width: 100%;
+            /* Set width to 100% */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            /* Added margin-bottom for the input boxes */
+            box-sizing: border-box;
+            /* Include padding and border in the width calculation */
+            font-size: 14px;
+            /* Added font-size */
+        }
+
+        .form-group input[type="submit"],
+        .form-group input[type="button"] {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .form-group input[type="submit"]:hover,
+        .form-group input[type="button"]:hover {
+            background-color: #0056b3;
+        }
+
+        .form-group select {
+            background-color: #fff;
+            /* Set background color for select */
+            font-size: 14px;
+            /* Added font-size */
+        }
+
+        .network-list {
+            list-style-type: none;
+            padding: 0;
+            width: calc(100% - 22px);
+        }
+
+        .network-item {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .network-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Media queries for responsiveness */
+        @media screen and (min-width: 768px) {
+            .container {
+                width: 25%;
+                /* Set width to around 25% of the viewport on PCs */
+            }
+        }
+				
+				.footer {
+            text-align: center;
+            margin-top: 12px;
+            color: #555;
+            font-size: 12px;
+        }
+
+				
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>WiFi & MQTT Configuration</h1>
+        <div class="form-group">
+            <h2>Measurements</h2>
+            <p>Temperature: <span id="temperature">--</span> °C</p>
+            <p>Humidity: <span id="humidity">--</span> %</p>
+            <p>Voltage: <span id="voltage">--</span> V</p>
+        </div>
+        <div class="form-group">
+            <h2>Settings</h2>
+            <form id="settings-form" action="/settings_save" method="post">
+                <label for="device-name">Device name:</label>
+								<input type="text" id="device-name" name="device-name" maxlength="14" placeholder="Enter device name..." pattern="^[a-zA-Z0-9]*$" title="characters a-z, A-Z and numbers">			
+                <label for="sampling-rate">Sleep time (seconds):</label>
+								<input type="text" id="sampling-rate" name="sampling-rate" maxlength="4" placeholder="Enter sampling rate..." pattern="^[0-9]*$" title="0-3600">
+                <input type="submit" value="Save">
+            </form>
+        </div>
+        <div class="form-group">
+            <h2>WiFi</h2>
+            <form id="wifi-form" action="/wifi_save" method="post">
+                <label for="ssid">SSID:</label>
+                <input type="text" id="ssid" name="ssid" maxlength="32" placeholder="Enter SSID...">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" maxlength="32" placeholder="Enter password...">
+                <label for="ip-address">IP Address:</label>
+                <input type="text" id="ip-address" name="ip-address" maxlength="15" placeholder="Enter IP address..." required pattern="^((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])$" title="enter valid IP">
+                <label for="gateway">Gateway:</label>
+                <input type="text" id="gateway" name="gateway" maxlength="15" placeholder="Enter gateway..." required pattern="^((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])$" title="enter valid IP">
+                <label for="subnet">Subnet:</label>
+                <input type="text" id="subnet" name="subnet" maxlength="15" placeholder="Enter subnet..." required pattern="^((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])$" title="enter valid IP">
+                 <!--<input type="button" value="Search WiFi Networks" onclick="searchNetworks()">-->
+                <!-- <ul id="network-list" class="network-list" style="display: none;">-->
+                    <!-- List of available Wi-Fi networks will be populated here -->
+                </ul>
+                <input type="submit" value="Save">
+            </form>
+        </div>
+        <div class="form-group">
+            <h2>MQTT</h2>
+            <form id="mqtt-form" action="/MQTT_save" method="post">
+                <label for="mqtt-broker">Broker:</label>
+                <input type="text" id="mqtt-broker" name="mqtt-broker" maxlength="250" placeholder="Enter MQTT broker address...">
+                <label for="mqtt-port">Port:</label>
+                <input type="text" id="mqtt-port" name="mqtt-port" maxlength="5" placeholder="Enter MQTT port..." pattern="^[0-9]*$" title="enter valid port number">
+                <label for="mqtt-username">Username (optional):</label>
+                <input type="text" id="mqtt-username" name="mqtt-username" maxlength="64" placeholder="Enter MQTT username...">
+                <label for="mqtt-password">Password (optional):</label>
+                <input type="password" id="mqtt-password" name="mqtt-password" maxlength="64" placeholder="Enter MQTT password...">
+                <label for="mqtt-topic-T">Temperature:</label>
+                <input type="text" id="mqtt-topic-T" name="mqtt-topic-T" maxlength="50" placeholder="Enter MQTT temperature topic...">
+                <label for="mqtt-topic-H">Humidity:</label>
+                <input type="text" id="mqtt-topic-H" name="mqtt-topic-H" maxlength="50" placeholder="Enter MQTT humidity topic...">
+                <label for="mqtt-topic-V">Battery voltage:</label>
+                <input type="text" id="mqtt-topic-V" name="mqtt-topic-V" maxlength="50" placeholder="Enter MQTT voltage topic...">
+                <input type="submit" value="Save">
+            </form>
+        </div>
+        <div class="form-group">
+            <h2></h2>
+            <form id="mqtt-form" action="/restart" method="post">
+                <input type="submit" value="Restart">
+            </form>
+        </div>	
+    </div>
+		<div class="footer">v @VERSION@</div>
+
+<script> 
+var gateway = `ws://${window.location.hostname}/ws`;
+var websocket;
+// Init web socket when the page loads
+window.addEventListener('load', onload);
+
+function onload(event) {
+    initWebSocket();
+}
+
+function getReadings() {
+    websocket.send("getReadings");
+}
+
+function initWebSocket() {
+    //console.log('Trying to open a WebSocket connection…');
+    websocket = new WebSocket(gateway);
+    websocket.onopen = onOpen;
+    websocket.onclose = onClose;
+    websocket.onmessage = onMessage;
+}
+
+// When websocket is established, call the getReadings() function
+function onOpen(event) {
+    //console.log('Connection opened');
+    getReadings();
+}
+
+function onClose(event) {
+    console.log('Connection closed');
+    setTimeout(initWebSocket, 2000);
+}
+
+// Function that receives the message from the ESP with the readings
+function onMessage(event) {
+    //console.log(event.data);
+    var myObj = JSON.parse(event.data);
+    var keys = Object.keys(myObj);
+	
+		for (var i = 0; i < keys.length; i++) {
+				var key = keys[i];
+				var element = document.getElementById(key);
+				if (element) {
+						if (element.tagName.toLowerCase() === "input" && ((element.type.toLowerCase() === "text") || (element.type.toLowerCase() === "password"))) {
+								element.value = myObj[key];
+						} else {
+								element.innerHTML = myObj[key];
+						}
+				} 
+		}
+}
+
+/*
+function searchNetworks() {
+    // Dummy data for demonstration
+    var networks = ['Network 1', 'Network 2', 'Network 3', 'Network 4', 'Network 5'];
+
+    var networkList = document.getElementById('network-list');
+    networkList.innerHTML = ''; // Clear existing list
+
+    networks.forEach(function (network) {
+        var listItem = document.createElement('li');
+        listItem.className = 'network-item';
+        listItem.textContent = network;
+        listItem.onclick = function () {
+            document.getElementById('ssid').value = network;
+            networkList.style.display = 'none';
+        };
+        networkList.appendChild(listItem);
+    });
+
+    networkList.style.display = 'block';	
+}
+*/
+</script>
+</body>
+
+</html>
+)=====";
